@@ -12,12 +12,12 @@ def index(request):
         movies = Movie.objects.all()
     template_data = {}
     template_data['title'] = 'Movies'
-    template_data['movies'] = Movie.objects.all()
+    template_data['movies'] = movies
     return render(request, 'movies/index.html', {'template_data': template_data})
 
 def show(request, id):
     movie = Movie.objects.get(id=id)
-    reviews = Review.objects.filter(movie=movie)
+    reviews = Review.objects.filter(movie=movie, reported=False)
     template_data = {}
     template_data['title'] = movie.name
     template_data['movie'] = movie
@@ -32,6 +32,7 @@ def create_review(request, id):
         review.comment = request.POST['comment']
         review.movie = movie
         review.user = request.user
+        review.reported = False
         review.save()
         return redirect('movies.show', id=id)
     else:
@@ -61,5 +62,12 @@ def delete_review(request, id, review_id):
     review = get_object_or_404(Review, id=review_id,
         user=request.user)
     review.delete()
+    return redirect('movies.show', id=id)
+
+@login_required
+def report_review(request, id, review_id):
+    review = get_object_or_404(Review, id=review_id)
+    review.reported = True
+    review.save()
     return redirect('movies.show', id=id)
     
